@@ -15,19 +15,21 @@ module MyConcurrent
     end
 
     def initialize
-      @state = :new
+      @state = :pending
     end
 
     def fulfill(value)
       @value = value
+      @state = :fulfilled
     end
 
     def reject(reason)
       @reason = reason
+      @state = :rejected
     end
 
     def state
-      @reason ? :rejected : :fulfilled
+      @state
     end
 
     def fulfilled?
