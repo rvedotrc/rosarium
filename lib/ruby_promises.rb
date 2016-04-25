@@ -16,20 +16,29 @@ module MyConcurrent
 
     def initialize
       @state = :pending
+      @mutex = Mutex.new
     end
 
     def fulfill(value)
-      @value = value
-      @state = :fulfilled
+      synchronized do
+        if @state != :fulfilled and @state != :rejected
+          @value = value
+          @state = :fulfilled
+        end
+      end
     end
 
     def reject(reason)
-      @reason = reason
-      @state = :rejected
+      synchronized do
+        if @state != :fulfilled and @state != :rejected
+          @reason = reason
+          @state = :rejected
+        end
+      end
     end
 
     def state
-      @state
+      synchronized { @state }
     end
 
     def fulfilled?
@@ -41,11 +50,17 @@ module MyConcurrent
     end
 
     def value
-      @value
+      synchronized { @value }
     end
 
     def reason
-      @reason
+      synchronized { @reason }
+    end
+
+    private
+
+    def synchronized
+      @mutex.synchronize { yield }
     end
 
   end

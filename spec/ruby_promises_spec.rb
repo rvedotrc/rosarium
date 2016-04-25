@@ -57,4 +57,38 @@ describe MyConcurrent::Promise do
     check_rejected promise, e
   end
 
+  it "a fulfilled promise cannot be fulfilled again" do
+    promise = MyConcurrent::Promise.fulfill(7)
+    check_fulfilled promise, 7
+
+    promise.fulfill(123)
+    check_fulfilled promise, 7
+  end
+
+  it "a fulfilled promise cannot be rejected" do
+    promise = MyConcurrent::Promise.fulfill(7)
+    check_fulfilled promise, 7
+
+    promise.fulfill("an error")
+    check_fulfilled promise, 7
+  end
+
+  it "a rejected promise cannot be fulfilled" do
+    e = "an error"
+    promise = MyConcurrent::Promise.reject(e)
+    check_rejected promise, e
+
+    promise.fulfill(7)
+    check_rejected promise, e
+  end
+
+  it "a rejected promise cannot be rejected again" do
+    e = "an error"
+    promise = MyConcurrent::Promise.reject(e)
+    check_rejected promise, e
+
+    promise.reject("another error")
+    check_rejected promise, e
+  end
+
 end
