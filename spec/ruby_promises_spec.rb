@@ -71,4 +71,21 @@ describe MyConcurrent::Promise do
     check_rejected deferred.promise, 7
   end
 
+  # Creating immediately-executable promises
+
+  it "creates an immediately-executable promise" do
+    promise = MyConcurrent::Promise.execute do
+      sleep 0.1 ; 7
+    end
+    check_pending promise
+    sleep 0.2
+    check_fulfilled promise, 7
+  end
+
+  # TODO:
+  # .execute
+  # .then
+  # .catch / .fail
+  # .all
+
 end

@@ -108,6 +108,14 @@ module MyConcurrent
       deferred.promise
     end
 
+    def self.execute(&block)
+      deferred = new_deferred
+      t = Thread.new do
+        deferred.fulfill block.call
+      end
+      deferred.promise
+    end
+
   end
 
 end
