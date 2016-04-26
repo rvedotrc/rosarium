@@ -18,6 +18,7 @@ module MyConcurrent
     def initialize
       @state = :pending
       @mutex = Mutex.new
+      @on_resolution = []
     end
 
     def state
@@ -49,21 +50,50 @@ module MyConcurrent
     public
 
     def fulfill(value)
-      synchronized do
-        if @state != :fulfilled and @state != :rejected
-          @value = value
-          @state = :fulfilled
-        end
-      end
+      resolve(value, nil)
     end
 
     def reject(reason)
+      raise "reason must be an Exception" unless reason.kind_of? Exception
+      resolve(nil, reason)
+    end
+
+    private
+
+    def resolve(value, reason)
+      callbacks = []
+
       synchronized do
         if @state != :fulfilled and @state != :rejected
-          @reason = reason
-          @state = :rejected
+          if reason.nil?
+            @value = value
+            @state = :fulfilled
+          else
+            @reason = reason
+            @state = :rejected
+          end
+
+          callbacks.concat @on_resolution
+          @on_resolution.clear
         end
       end
+
+      callbacks.each(&:call)
+    end
+
+    def on_resolution(&block)
+      immediate = synchronized do
+        if @state == :fulfilled or @state == :rejected
+          true
+        else
+          @on_resolution << block
+          false
+        end
+      end
+
+      block.call if immediate
+
+      nil
     end
 
   end
@@ -117,6 +147,24 @@ module MyConcurrent
           deferred.reject e
         end
       end
+      deferred.promise
+    end
+
+    def then(&block)
+      deferred = self.class.new_deferred
+
+      on_resolution do
+        if fulfilled?
+          begin
+            deferred.fulfill(block.call value)
+          rescue Exception => e
+            deferred.reject e
+          end
+        else
+          deferred.reject reason
+        end
+      end
+
       deferred.promise
     end
 

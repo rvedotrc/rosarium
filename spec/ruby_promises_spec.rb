@@ -26,6 +26,10 @@ describe MyConcurrent::Promise do
     expect(promise.reason).to eq(e)
   end
 
+  def an_error(message = "bang")
+    RuntimeError.new(message)
+  end
+
   # Creating instantly-resolved promises
 
   it "creates a fulfilled promise" do
@@ -36,8 +40,9 @@ describe MyConcurrent::Promise do
   end
 
   it "creates a rejected promise" do
-    t = MyConcurrent::Promise.reject 7
-    check_rejected t, 7
+    e = an_error
+    t = MyConcurrent::Promise.reject an_error
+    check_rejected t, an_error
     expect(t).not_to respond_to(:fulfill)
     expect(t).not_to respond_to(:reject)
   end
@@ -56,19 +61,27 @@ describe MyConcurrent::Promise do
     check_fulfilled deferred.promise, 7
     deferred.fulfill 8
     check_fulfilled deferred.promise, 7
-    deferred.reject 9
+    deferred.reject an_error
     check_fulfilled deferred.promise, 7
   end
 
   it "deferred can be rejected only once" do
+    e = an_error
     deferred = MyConcurrent::Promise.defer
     check_pending deferred.promise
-    deferred.reject 7
-    check_rejected deferred.promise, 7
-    deferred.reject 8
-    check_rejected deferred.promise, 7
+    deferred.reject e
+    check_rejected deferred.promise, e
+    deferred.reject an_error("again")
+    check_rejected deferred.promise, e
     deferred.fulfill 9
-    check_rejected deferred.promise, 7
+    check_rejected deferred.promise, e
+  end
+
+  it "can only be rejected with an exception" do
+    deferred = MyConcurrent::Promise.defer
+    check_pending deferred.promise
+    expect { deferred.reject "123" }.to raise_error /reason must be an Exception/
+    check_pending deferred.promise
   end
 
   # Creating immediately-executable promises
@@ -92,10 +105,43 @@ describe MyConcurrent::Promise do
     check_rejected promise, e
   end
 
+  # Chaining promises
+
+  it "supports simple 'then'" do
+    deferred = MyConcurrent::Promise.defer
+    chained = deferred.promise.then {|arg| arg * 2}
+    check_pending chained
+    deferred.fulfill 7
+    sleep 0.1
+    check_fulfilled chained, 14
+  end
+
+  it "rejects if 'then' raises an error" do
+    e = an_error
+    deferred = MyConcurrent::Promise.defer
+    chained = deferred.promise.then { raise e }
+    check_pending chained
+    deferred.fulfill 7
+    sleep 0.1
+    check_rejected chained, e
+  end
+
+  it "rejects if the parent rejects" do
+    e = an_error
+    deferred = MyConcurrent::Promise.defer
+    then_called = false
+    chained = deferred.promise.then { then_called = true }
+    check_pending chained
+    deferred.reject e
+    check_rejected chained, e
+    expect(then_called).to be_falsy
+  end
+
   # TODO:
   # .execute
   # .then
   # .catch / .fail
   # .all
+  # blocking .value, .value!, .reason
 
 end
