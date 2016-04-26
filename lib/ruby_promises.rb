@@ -175,6 +175,13 @@ module MyConcurrent
       deferred.promise
     end
 
+    def rescue(&block)
+      self.then(block)
+    end
+
+    alias_method :catch, :rescue
+    alias_method :on_error, :rescue
+
   end
 
 end

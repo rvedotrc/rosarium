@@ -155,11 +155,21 @@ describe MyConcurrent::Promise do
     check_fulfilled chained, 7
   end
 
+  it "supports rescue/catch/on_error" do
+    %i[ rescue catch on_error ].each do |method|
+      deferred = MyConcurrent::Promise.defer
+      chained = deferred.promise.send(method) { 7 }
+      deferred.reject an_error
+      check_fulfilled chained, 7
+    end
+  end
+
   # TODO:
-  # .execute
-  # .then
-  # .catch / .fail
+  # fulfill-with-promise (then? deferred?)
+  # reject-with-promise (then? deferred?)
   # .all
+  # .allSettled
+  # .spread
   # blocking .value, .value!, .reason
 
 end
