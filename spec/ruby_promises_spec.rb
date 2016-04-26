@@ -137,6 +137,24 @@ describe MyConcurrent::Promise do
     expect(then_called).to be_falsy
   end
 
+  it "supports then(on_rejected)" do
+    e = an_error
+    e2 = an_error("another")
+    deferred = MyConcurrent::Promise.defer
+    got_args = nil
+    chained = deferred.promise.then(Proc.new {|*args| got_args = args; raise e2 }) { raise "should never be called" }
+    deferred.reject e
+    check_rejected chained, e2
+    expect(got_args).to eq([e])
+  end
+
+  it "on_rejected can cause fulfilled" do
+    deferred = MyConcurrent::Promise.defer
+    chained = deferred.promise.then(Proc.new {7}) { raise "should never be called" }
+    deferred.reject an_error
+    check_fulfilled chained, 7
+  end
+
   # TODO:
   # .execute
   # .then

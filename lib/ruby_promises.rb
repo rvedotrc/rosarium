@@ -150,18 +150,25 @@ module MyConcurrent
       deferred.promise
     end
 
-    def then(&block)
+    def then(on_rejected = nil, &on_fulfilled)
       deferred = self.class.new_deferred
+
+      on_fulfilled ||= Proc.new {|value| value}
+      on_rejected ||= Proc.new {|reason| raise reason}
 
       on_resolution do
         if fulfilled?
           begin
-            deferred.fulfill(block.call value)
+            deferred.fulfill(on_fulfilled.call value)
           rescue Exception => e
             deferred.reject e
           end
         else
-          deferred.reject reason
+          begin
+            deferred.fulfill(on_rejected.call reason)
+          rescue Exception => e
+            deferred.reject e
+          end
         end
       end
 
