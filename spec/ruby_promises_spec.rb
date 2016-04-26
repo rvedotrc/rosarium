@@ -10,6 +10,14 @@ describe MyConcurrent::Promise do
     # expect(promise.reason).to be_nil # should block
   end
 
+  def check_resolving(promise)
+    expect(promise.state).to eq(:resolving)
+    expect(promise).not_to be_fulfilled
+    expect(promise).not_to be_rejected
+    # expect(promise.value).to be_nil # should block
+    # expect(promise.reason).to be_nil # should block
+  end
+
   def check_fulfilled(promise, value)
     expect(promise.state).to eq(:fulfilled)
     expect(promise).to be_fulfilled
@@ -33,7 +41,7 @@ describe MyConcurrent::Promise do
   # Creating instantly-resolved promises
 
   it "creates a fulfilled promise" do
-    t = MyConcurrent::Promise.fulfill 7
+    t = MyConcurrent::Promise.resolve 7
     check_fulfilled t, 7
     expect(t).not_to respond_to(:fulfill)
     expect(t).not_to respond_to(:reject)
@@ -57,9 +65,9 @@ describe MyConcurrent::Promise do
   it "deferred can be fulfilled only once" do
     deferred = MyConcurrent::Promise.defer
     check_pending deferred.promise
-    deferred.fulfill 7
+    deferred.resolve 7
     check_fulfilled deferred.promise, 7
-    deferred.fulfill 8
+    deferred.resolve 8
     check_fulfilled deferred.promise, 7
     deferred.reject an_error
     check_fulfilled deferred.promise, 7
@@ -73,7 +81,7 @@ describe MyConcurrent::Promise do
     check_rejected deferred.promise, e
     deferred.reject an_error("again")
     check_rejected deferred.promise, e
-    deferred.fulfill 9
+    deferred.resolve 9
     check_rejected deferred.promise, e
   end
 
@@ -111,7 +119,7 @@ describe MyConcurrent::Promise do
     deferred = MyConcurrent::Promise.defer
     chained = deferred.promise.then {|arg| arg * 2}
     check_pending chained
-    deferred.fulfill 7
+    deferred.resolve 7
     sleep 0.1
     check_fulfilled chained, 14
   end
@@ -121,7 +129,7 @@ describe MyConcurrent::Promise do
     deferred = MyConcurrent::Promise.defer
     chained = deferred.promise.then { raise e }
     check_pending chained
-    deferred.fulfill 7
+    deferred.resolve 7
     sleep 0.1
     check_rejected chained, e
   end

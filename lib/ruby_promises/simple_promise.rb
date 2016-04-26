@@ -4,15 +4,15 @@ module MyConcurrent
 
     def self.new_deferred
       promise = new
-      fulfiller = promise.method :fulfill
+      resolver = promise.method :resolve
       rejecter = promise.method :reject
 
       class <<promise
-        undef :fulfill
+        undef :resolve
         undef :reject
       end
 
-      Deferred.new(promise, fulfiller, rejecter)
+      Deferred.new(promise, resolver, rejecter)
     end
 
     def initialize
@@ -49,18 +49,18 @@ module MyConcurrent
 
     public
 
-    def fulfill(value)
-      resolve(value, nil)
+    def resolve(value)
+      _resolve(value, nil)
     end
 
     def reject(reason)
       raise "reason must be an Exception" unless reason.kind_of? Exception
-      resolve(nil, reason)
+      _resolve(nil, reason)
     end
 
     private
 
-    def resolve(value, reason)
+    def _resolve(value, reason)
       callbacks = []
 
       synchronized do

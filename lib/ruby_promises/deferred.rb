@@ -2,9 +2,9 @@ module MyConcurrent
 
   class Deferred
 
-    def initialize(promise, fulfiller, rejecter)
+    def initialize(promise, resolver, rejecter)
       @promise = promise
-      @fulfiller = fulfiller
+      @resolver = resolver
       @rejecter = rejecter
     end
 
@@ -12,8 +12,8 @@ module MyConcurrent
       @promise
     end
 
-    def fulfill(value)
-      @fulfiller.call(value)
+    def resolve(value)
+      @resolver.call(value)
     end
 
     def reject(reason)

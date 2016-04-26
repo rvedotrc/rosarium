@@ -6,9 +6,10 @@ module MyConcurrent
       new_deferred
     end
 
-    def self.fulfill(value)
+    def self.resolve(value)
+      # FIXME return value if value.kind_of? Promise
       deferred = new_deferred
-      deferred.fulfill(value)
+      deferred.resolve(value)
       deferred.promise
     end
 
@@ -22,7 +23,7 @@ module MyConcurrent
       deferred = new_deferred
       EXECUTOR.submit do
         begin
-          deferred.fulfill block.call
+          deferred.resolve block.call
         rescue Exception => e
           deferred.reject e
         end
@@ -30,22 +31,22 @@ module MyConcurrent
       deferred.promise
     end
 
-    def then(on_rejected = nil, &on_fulfilled)
+    def then(on_rejected = nil, &on_resolved)
       deferred = self.class.new_deferred
 
-      on_fulfilled ||= Proc.new {|value| value}
+      on_resolved ||= Proc.new {|value| value}
       on_rejected ||= Proc.new {|reason| raise reason}
 
       on_resolution do
         if fulfilled?
           begin
-            deferred.fulfill(on_fulfilled.call value)
+            deferred.resolve(on_resolved.call value)
           rescue Exception => e
             deferred.reject e
           end
         else
           begin
-            deferred.fulfill(on_rejected.call reason)
+            deferred.resolve(on_rejected.call reason)
           rescue Exception => e
             deferred.reject e
           end
