@@ -26,69 +26,49 @@ describe MyConcurrent::Promise do
     expect(promise.reason).to eq(e)
   end
 
-  it "creates a pending promise" do
-    promise = MyConcurrent::Promise.new
-    check_pending promise
-  end
-
-  it "creates and then fulfills a promise" do
-    promise = MyConcurrent::Promise.new
-    check_pending promise
-    promise.fulfill 7
-    check_fulfilled promise, 7
-  end
-
-  it "creates and then rejects a promise" do
-    e = StandardError.new
-    promise = MyConcurrent::Promise.new
-    check_pending promise
-    promise.reject e
-    check_rejected promise, e
-  end
+  # Creating instantly-resolved promises
 
   it "creates a fulfilled promise" do
-    promise = MyConcurrent::Promise.fulfill(7)
-    check_fulfilled promise, 7
+    t = MyConcurrent::Promise.fulfill 7
+    check_fulfilled t, 7
+    expect(t).not_to respond_to(:fulfill)
+    expect(t).not_to respond_to(:reject)
   end
 
   it "creates a rejected promise" do
-    e = StandardError.new
-    promise = MyConcurrent::Promise.reject(e)
-    check_rejected promise, e
+    t = MyConcurrent::Promise.reject 7
+    check_rejected t, 7
+    expect(t).not_to respond_to(:fulfill)
+    expect(t).not_to respond_to(:reject)
   end
 
-  it "a fulfilled promise cannot be fulfilled again" do
-    promise = MyConcurrent::Promise.fulfill(7)
-    check_fulfilled promise, 7
+  # Creating deferreds
 
-    promise.fulfill(123)
-    check_fulfilled promise, 7
+  it "creates a pending promise" do
+    deferred = MyConcurrent::Promise.defer
+    check_pending deferred.promise
   end
 
-  it "a fulfilled promise cannot be rejected" do
-    promise = MyConcurrent::Promise.fulfill(7)
-    check_fulfilled promise, 7
-
-    promise.fulfill("an error")
-    check_fulfilled promise, 7
+  it "deferred can be fulfilled only once" do
+    deferred = MyConcurrent::Promise.defer
+    check_pending deferred.promise
+    deferred.fulfill 7
+    check_fulfilled deferred.promise, 7
+    deferred.fulfill 8
+    check_fulfilled deferred.promise, 7
+    deferred.reject 9
+    check_fulfilled deferred.promise, 7
   end
 
-  it "a rejected promise cannot be fulfilled" do
-    e = "an error"
-    promise = MyConcurrent::Promise.reject(e)
-    check_rejected promise, e
-
-    promise.fulfill(7)
-    check_rejected promise, e
-  end
-
-  it "a rejected promise cannot be rejected again" do
-    e = "an error"
-    promise = MyConcurrent::Promise.reject(e)
-    check_rejected promise, e
-
-    promise.reject("another error")
-    check_rejected promise, e
+  it "deferred can be rejected only once" do
+    deferred = MyConcurrent::Promise.defer
+    check_pending deferred.promise
+    deferred.reject 7
+    check_rejected deferred.promise, 7
+    deferred.reject 8
+    check_rejected deferred.promise, 7
+    deferred.fulfill 9
+    check_rejected deferred.promise, 7
   end
 
 end

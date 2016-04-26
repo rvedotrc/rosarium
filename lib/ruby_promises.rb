@@ -1,23 +1,52 @@
 module MyConcurrent
-  
-  class Promise
 
-    def self.fulfill(value)
-      o = new
-      o.fulfill(value)
-      o
-    end
+  class SimplePromise
 
-    def self.reject(reason)
-      o = new
-      o.reject(reason)
-      o
+    def self.new_deferred
+      promise = new
+      fulfiller = promise.method :fulfill
+      rejecter = promise.method :reject
+
+      class <<promise
+        undef :fulfill
+        undef :reject
+      end
+
+      Deferred.new(promise, fulfiller, rejecter)
     end
 
     def initialize
       @state = :pending
       @mutex = Mutex.new
     end
+
+    def state
+      synchronized { @state }
+    end
+
+    def value
+      synchronized { @value }
+    end
+
+    def reason
+      synchronized { @reason }
+    end
+
+    def fulfilled?
+      state == :fulfilled
+    end
+
+    def rejected?
+      state == :rejected
+    end
+
+    private
+
+    def synchronized
+      @mutex.synchronize { yield }
+    end
+
+    public
 
     def fulfill(value)
       synchronized do
@@ -37,32 +66,48 @@ module MyConcurrent
       end
     end
 
-    def state
-      synchronized { @state }
+  end
+
+  class Deferred
+
+    def initialize(promise, fulfiller, rejecter)
+      @promise = promise
+      @fulfiller = fulfiller
+      @rejecter = rejecter
     end
 
-    def fulfilled?
-      state == :fulfilled
+    def promise
+      @promise
     end
 
-    def rejected?
-      state == :rejected
+    def fulfill(value)
+      @fulfiller.call(value)
     end
 
-    def value
-      synchronized { @value }
-    end
-
-    def reason
-      synchronized { @reason }
-    end
-
-    private
-
-    def synchronized
-      @mutex.synchronize { yield }
+    def reject(reason)
+      @rejecter.call(reason)
     end
 
   end
-  
+
+  class Promise < SimplePromise
+
+    def self.defer
+      new_deferred
+    end
+
+    def self.fulfill(value)
+      deferred = new_deferred
+      deferred.fulfill(value)
+      deferred.promise
+    end
+
+    def self.reject(reason)
+      deferred = new_deferred
+      deferred.reject(reason)
+      deferred.promise
+    end
+
+  end
+
 end
