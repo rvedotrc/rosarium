@@ -111,7 +111,11 @@ module MyConcurrent
     def self.execute(&block)
       deferred = new_deferred
       t = Thread.new do
-        deferred.fulfill block.call
+        begin
+          deferred.fulfill block.call
+        rescue Exception => e
+          deferred.reject e
+        end
       end
       deferred.promise
     end

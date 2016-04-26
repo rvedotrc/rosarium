@@ -82,6 +82,16 @@ describe MyConcurrent::Promise do
     check_fulfilled promise, 7
   end
 
+  it "catches errors from the executed block and rejects" do
+    e = RuntimeError.new("bang")
+    promise = MyConcurrent::Promise.execute do
+      sleep 0.1 ; raise e
+    end
+    check_pending promise
+    sleep 0.2
+    check_rejected promise, e
+  end
+
   # TODO:
   # .execute
   # .then
