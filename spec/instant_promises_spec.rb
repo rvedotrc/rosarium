@@ -5,6 +5,12 @@ describe "instantly-resolved promises" do
 
   include PromiseTestHelper
 
+  it "returns the same promise" do
+    d = MyConcurrent::Promise.defer
+    t = MyConcurrent::Promise.resolve d.promise
+    expect(t).to eq(d.promise)
+  end
+
   it "creates a fulfilled promise" do
     t = MyConcurrent::Promise.resolve 7
     check_fulfilled t, 7

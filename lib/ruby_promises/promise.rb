@@ -7,7 +7,10 @@ module MyConcurrent
     end
 
     def self.resolve(value)
-      # FIXME return value if value.kind_of? Promise
+      if value.kind_of? Promise
+        return value
+      end
+
       deferred = new_deferred
       deferred.resolve(value)
       deferred.promise
