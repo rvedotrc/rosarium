@@ -6,7 +6,11 @@ A library for implementing Promises - or something like them - in ruby.
 
 Because I keep hitting bugs and annoying inflexibilities in `concurrent-ruby`,
 whereas I really enjoy the stability and flexibility of JavaScript's "Q"
-(<https://github.com/kriskowal/q/wiki/API-Reference>).
+library (<https://github.com/kriskowal/q/wiki/API-Reference>).
+
+As you can tell by the fact that the module is called `MyConcurrent`, I'm not
+expecting anyone but me to use this code at this time.  But you're welcome to
+do so, if you like.
 
 # Example
 
@@ -103,4 +107,14 @@ Chaining promises together:
   # Handle both fulfillment and rejection:
   promise2 = promise1.then(Proc.new { |promise1_reason| ... }) { |promise1_value| ... }
 ```
+
+# Miscellany
+
+Promise code (every time a ruby block appears in the above examples) is run
+via a fixed-size thread pool, currently set to 10 threads.  Execution order is
+not defined.
+
+In comparison to the Promises/A+ spec <https://promisesaplus.com/>, these
+promises have an extra possible state, `:resolving`.  You are encouraged to
+use `#fulfilled?` and `#rejected?` instead anyway.
 
