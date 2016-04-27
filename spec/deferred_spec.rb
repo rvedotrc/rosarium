@@ -40,6 +40,23 @@ describe "deferred promises" do
     check_pending deferred.promise
   end
 
+  it "can be resolved with an already-fulfilled promise" do
+    d1 = MyConcurrent::Promise.defer
+    d2 = MyConcurrent::Promise.defer
+    d2.resolve 7
+    d1.resolve(d2.promise)
+    check_fulfilled d1.promise, 7
+  end
+
+  it "can be resolved with an already-rejected promise" do
+    d1 = MyConcurrent::Promise.defer
+    d2 = MyConcurrent::Promise.defer
+    e = an_error
+    d2.reject e
+    d1.resolve(d2.promise)
+    check_rejected d1.promise, e
+  end
+
   it "can be resolved with a later-fulfilled promise" do
     d1 = MyConcurrent::Promise.defer
     d2 = MyConcurrent::Promise.defer
