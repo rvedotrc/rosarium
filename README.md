@@ -36,7 +36,7 @@ do so, if you like.
   # Once all promises in the list are fulfilled, then fulfill with a list of
   # their values.  If any promise in the list is rejected, then reject with
   # the same reason:
-  promise = MyConcurrent::Promise.all?([ promise1, promise2, ... ])
+  promise = MyConcurrent::Promise.all([ promise1, promise2, ... ])
 
   # Wait for all the promises in the list to become settled (fulfilled or
   # rejected); then fulfill with the list of promises.

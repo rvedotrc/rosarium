@@ -65,16 +65,16 @@ describe "instantly-resolved promises" do
     check_fulfilled promise, [ d1.promise, d2.promise ]
   end
 
-  it "supports all? (empty)" do
-    promise = MyConcurrent::Promise.all? []
+  it "supports all (empty)" do
+    promise = MyConcurrent::Promise.all []
     check_fulfilled promise, []
   end
 
-  it "supports all? (reject)" do
+  it "supports all (reject)" do
     d1 = MyConcurrent::Promise.defer
     d2 = MyConcurrent::Promise.defer
     d3 = MyConcurrent::Promise.defer
-    promise = MyConcurrent::Promise.all? [d1.promise, d2.promise, d3.promise]
+    promise = MyConcurrent::Promise.all [d1.promise, d2.promise, d3.promise]
     check_pending promise
 
     d1.resolve 7
@@ -86,10 +86,10 @@ describe "instantly-resolved promises" do
     check_rejected promise, e
   end
 
-  it "supports all? (fulfill)" do
+  it "supports all (fulfill)" do
     d1 = MyConcurrent::Promise.defer
     d2 = MyConcurrent::Promise.defer
-    promise = MyConcurrent::Promise.all? [d1.promise, d2.promise]
+    promise = MyConcurrent::Promise.all [d1.promise, d2.promise]
     check_pending promise
 
     d1.resolve 7

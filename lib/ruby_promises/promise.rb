@@ -56,7 +56,7 @@ module MyConcurrent
       deferred.promise
     end
 
-    def self.all?(promises)
+    def self.all(promises)
       return resolve([]) if promises.empty?
 
       deferred = new_deferred
