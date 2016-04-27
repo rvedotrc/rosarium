@@ -5,27 +5,6 @@ describe MyConcurrent::Promise do
 
   include PromiseTestHelper
 
-  # Creating immediately-executable promises
-
-  it "creates an immediately-executable promise" do
-    promise = MyConcurrent::Promise.execute do
-      sleep 0.1 ; 7
-    end
-    check_pending promise
-    sleep 0.2
-    check_fulfilled promise, 7
-  end
-
-  it "catches errors from the executed block and rejects" do
-    e = RuntimeError.new("bang")
-    promise = MyConcurrent::Promise.execute do
-      sleep 0.1 ; raise e
-    end
-    check_pending promise
-    sleep 0.2
-    check_rejected promise, e
-  end
-
   # Chaining promises
 
   it "supports simple 'then'" do
