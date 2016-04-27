@@ -64,15 +64,35 @@ module MyConcurrent
       callbacks = []
 
       synchronized do
-        if @state != :fulfilled and @state != :rejected
-          if reason.nil?
+        if @state == :pending
+          if value.kind_of? SimplePromise
+            @state = :resolving
+            value.on_resolution { copy_resolution_from value }
+          elsif reason.nil?
             @value = value
             @state = :fulfilled
+            callbacks.concat @on_resolution
+            @on_resolution.clear
           else
             @reason = reason
             @state = :rejected
+            callbacks.concat @on_resolution
+            @on_resolution.clear
           end
+        end
+      end
 
+      callbacks.each(&:call)
+    end
+
+    def copy_resolution_from(other)
+      callbacks = []
+
+      synchronized do
+        if @state == :resolving
+          @value = other.value
+          @reason = other.reason
+          @state = other.state
           callbacks.concat @on_resolution
           @on_resolution.clear
         end
@@ -80,6 +100,8 @@ module MyConcurrent
 
       callbacks.each(&:call)
     end
+
+    protected
 
     def on_resolution(&block)
       immediate = synchronized do

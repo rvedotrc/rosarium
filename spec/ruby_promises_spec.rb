@@ -172,6 +172,25 @@ describe MyConcurrent::Promise do
     end
   end
 
+  it "can be resolved with a later-fulfilled promise" do
+    d1 = MyConcurrent::Promise.defer
+    d2 = MyConcurrent::Promise.defer
+    d1.resolve(d2.promise)
+    check_resolving d1.promise
+    d2.resolve 7
+    check_fulfilled d1.promise, 7
+  end
+
+  it "can be resolved with a later-rejected promise" do
+    d1 = MyConcurrent::Promise.defer
+    d2 = MyConcurrent::Promise.defer
+    d1.resolve(d2.promise)
+    check_resolving d1.promise
+    e = an_error
+    d2.reject e
+    check_rejected d1.promise, e
+  end
+
   # TODO:
   # fulfill-with-promise (then? deferred?)
   # reject-with-promise (then? deferred?)
