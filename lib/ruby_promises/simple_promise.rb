@@ -18,6 +18,7 @@ module MyConcurrent
     def initialize
       @state = :pending
       @mutex = Mutex.new
+      @condition = ConditionVariable.new
       @on_resolution = []
     end
 
@@ -55,16 +56,15 @@ module MyConcurrent
     end
 
     def wait
-      m = Mutex.new
-      c = ConditionVariable.new
-
       on_resolution do
-        m.synchronize { c.broadcast }
+        @mutex.synchronize { @condition.broadcast }
       end
 
-      loop do
-        break if state == :fulfilled or state == :rejected
-        m.synchronize { c.wait m }
+      @mutex.synchronize do
+        loop do
+          return if @state == :fulfilled or @state == :rejected
+          @condition.wait @mutex
+        end
       end
     end
 
