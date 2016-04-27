@@ -62,12 +62,13 @@ module MyConcurrent
 
     def _resolve(value, reason)
       callbacks = []
+      add_on_resolution = false
 
       synchronized do
         if @state == :pending
           if value.kind_of? SimplePromise
             @state = :resolving
-            value.on_resolution { copy_resolution_from value }
+            add_on_resolution = true
           elsif reason.nil?
             @value = value
             @state = :fulfilled
@@ -80,6 +81,10 @@ module MyConcurrent
             @on_resolution.clear
           end
         end
+      end
+
+      if add_on_resolution
+        value.on_resolution { copy_resolution_from value }
       end
 
       callbacks.each(&:call)
