@@ -34,25 +34,23 @@ module MyConcurrent
       deferred.promise
     end
 
-    def then(on_rejected = nil, &on_resolved)
+    def then(on_rejected = nil, &on_fulfilled)
       deferred = self.class.new_deferred
 
-      on_resolved ||= Proc.new {|value| value}
+      on_fulfilled ||= Proc.new {|value| value}
       on_rejected ||= Proc.new {|reason| raise reason}
 
       on_resolution do
-        if fulfilled?
-          begin
-            deferred.resolve(on_resolved.call value)
-          rescue Exception => e
-            deferred.reject e
-          end
-        else
-          begin
-            deferred.resolve(on_rejected.call reason)
-          rescue Exception => e
-            deferred.reject e
-          end
+        callback, arg = if fulfilled?
+                          [ on_fulfilled, value ]
+                        else
+                          [ on_rejected, reason ]
+                        end
+
+        begin
+          deferred.resolve(callback.call arg)
+        rescue Exception => e
+          deferred.reject e
         end
       end
 
