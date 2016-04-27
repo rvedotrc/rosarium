@@ -2,6 +2,9 @@ module MyConcurrent
 
   class Promise < SimplePromise
 
+    DEFAULT_ON_FULFILL = Proc.new {|value| value}
+    DEFAULT_ON_REJECT = Proc.new {|reason| raise reason}
+
     def self.defer
       new_deferred
     end
@@ -37,8 +40,8 @@ module MyConcurrent
     def then(on_rejected = nil, &on_fulfilled)
       deferred = self.class.new_deferred
 
-      on_fulfilled ||= Proc.new {|value| value}
-      on_rejected ||= Proc.new {|reason| raise reason}
+      on_fulfilled ||= DEFAULT_ON_FULFILL
+      on_rejected ||= DEFAULT_ON_REJECT
 
       on_resolution do
         callback, arg = if fulfilled?
