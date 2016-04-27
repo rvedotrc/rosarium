@@ -61,6 +61,7 @@ describe "instantly-resolved promises" do
 
     e = an_error
     d2.reject e
+    promise.wait
     check_fulfilled promise, [ d1.promise, d2.promise ]
   end
 
@@ -81,6 +82,7 @@ describe "instantly-resolved promises" do
 
     e = an_error
     d3.reject e
+    promise.wait
     check_rejected promise, e
   end
 
@@ -94,6 +96,7 @@ describe "instantly-resolved promises" do
     check_pending promise
 
     d2.resolve 8
+    promise.wait
     check_fulfilled promise, [7,8]
   end
 

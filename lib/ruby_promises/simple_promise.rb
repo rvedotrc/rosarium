@@ -114,7 +114,7 @@ module MyConcurrent
         value.on_resolution { copy_resolution_from value }
       end
 
-      callbacks.each(&:call)
+      callbacks.each {|c| EXECUTOR.submit { c.call } }
     end
 
     def copy_resolution_from(other)
@@ -130,7 +130,7 @@ module MyConcurrent
         end
       end
 
-      callbacks.each(&:call)
+      callbacks.each {|c| EXECUTOR.submit { c.call } }
     end
 
     protected
