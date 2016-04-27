@@ -64,12 +64,4 @@ describe MyConcurrent::Promise do
     end
   end
 
-  # TODO:
-  # fulfill-with-promise (then? deferred?)
-  # reject-with-promise (then? deferred?)
-  # .all
-  # .allSettled
-  # .spread
-  # blocking .value, .value!, .reason
-
 end
