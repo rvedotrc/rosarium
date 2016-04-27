@@ -1,14 +1,14 @@
-require "ruby_promises"
+require "rosarium"
 require_relative "./promise_test_helper"
 
-describe MyConcurrent::Promise do
+describe Rosarium::Promise do
 
   include PromiseTestHelper
 
   # Chaining promises
 
   it "supports simple 'then'" do
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     chained = deferred.promise.then {|arg| arg * 2}
     check_pending chained
     deferred.resolve 7
@@ -18,7 +18,7 @@ describe MyConcurrent::Promise do
 
   it "rejects if 'then' raises an error" do
     e = an_error
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     chained = deferred.promise.then { raise e }
     check_pending chained
     deferred.resolve 7
@@ -28,7 +28,7 @@ describe MyConcurrent::Promise do
 
   it "rejects if the parent rejects" do
     e = an_error
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     then_called = false
     chained = deferred.promise.then { then_called = true }
     check_pending chained
@@ -41,7 +41,7 @@ describe MyConcurrent::Promise do
   it "supports then(on_rejected)" do
     e = an_error
     e2 = an_error("another")
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     got_args = nil
     chained = deferred.promise.then(Proc.new {|*args| got_args = args; raise e2 }) { raise "should never be called" }
     deferred.reject e
@@ -51,7 +51,7 @@ describe MyConcurrent::Promise do
   end
 
   it "on_rejected can cause fulfilled" do
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     chained = deferred.promise.then(Proc.new {7}) { raise "should never be called" }
     deferred.reject an_error
     chained.wait
@@ -60,7 +60,7 @@ describe MyConcurrent::Promise do
 
   it "supports rescue/catch/on_error" do
     %i[ rescue catch on_error ].each do |method|
-      deferred = MyConcurrent::Promise.defer
+      deferred = Rosarium::Promise.defer
       chained = deferred.promise.send(method) { 7 }
       deferred.reject an_error
       chained.wait

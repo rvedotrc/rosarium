@@ -1,4 +1,4 @@
-require "ruby_promises"
+require "rosarium"
 require_relative "./promise_test_helper"
 
 describe "instantly-resolved promises" do
@@ -6,13 +6,13 @@ describe "instantly-resolved promises" do
   include PromiseTestHelper
 
   it "returns the same promise" do
-    d = MyConcurrent::Promise.defer
-    t = MyConcurrent::Promise.resolve d.promise
+    d = Rosarium::Promise.defer
+    t = Rosarium::Promise.resolve d.promise
     expect(t).to eq(d.promise)
   end
 
   it "creates a fulfilled promise" do
-    t = MyConcurrent::Promise.resolve 7
+    t = Rosarium::Promise.resolve 7
     check_fulfilled t, 7
     expect(t).not_to respond_to(:fulfill)
     expect(t).not_to respond_to(:reject)
@@ -20,14 +20,14 @@ describe "instantly-resolved promises" do
 
   it "creates a rejected promise" do
     e = an_error
-    t = MyConcurrent::Promise.reject an_error
+    t = Rosarium::Promise.reject an_error
     check_rejected t, an_error
     expect(t).not_to respond_to(:fulfill)
     expect(t).not_to respond_to(:reject)
   end
 
   it "creates an immediately-executable promise" do
-    promise = MyConcurrent::Promise.execute do
+    promise = Rosarium::Promise.execute do
       sleep 0.1 ; 7
     end
     check_pending promise
@@ -37,7 +37,7 @@ describe "instantly-resolved promises" do
 
   it "catches errors from the executed block and rejects" do
     e = RuntimeError.new("bang")
-    promise = MyConcurrent::Promise.execute do
+    promise = Rosarium::Promise.execute do
       sleep 0.1 ; raise e
     end
     check_pending promise
@@ -46,14 +46,14 @@ describe "instantly-resolved promises" do
   end
 
   it "supports all_settled (empty)" do
-    promise = MyConcurrent::Promise.all_settled []
+    promise = Rosarium::Promise.all_settled []
     check_fulfilled promise, []
   end
 
   it "supports all_settled (non-empty)" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
-    promise = MyConcurrent::Promise.all_settled [d1.promise, d2.promise]
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
+    promise = Rosarium::Promise.all_settled [d1.promise, d2.promise]
     check_pending promise
 
     d1.resolve 7
@@ -66,15 +66,15 @@ describe "instantly-resolved promises" do
   end
 
   it "supports all (empty)" do
-    promise = MyConcurrent::Promise.all []
+    promise = Rosarium::Promise.all []
     check_fulfilled promise, []
   end
 
   it "supports all (reject)" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
-    d3 = MyConcurrent::Promise.defer
-    promise = MyConcurrent::Promise.all [d1.promise, d2.promise, d3.promise]
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
+    d3 = Rosarium::Promise.defer
+    promise = Rosarium::Promise.all [d1.promise, d2.promise, d3.promise]
     check_pending promise
 
     d1.resolve 7
@@ -87,9 +87,9 @@ describe "instantly-resolved promises" do
   end
 
   it "supports all (fulfill)" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
-    promise = MyConcurrent::Promise.all [d1.promise, d2.promise]
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
+    promise = Rosarium::Promise.all [d1.promise, d2.promise]
     check_pending promise
 
     d1.resolve 7

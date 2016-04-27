@@ -1,4 +1,4 @@
-module MyConcurrent
+module Rosarium
 
   class FixedThreadExecutor
 

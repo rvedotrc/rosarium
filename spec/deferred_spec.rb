@@ -1,4 +1,4 @@
-require "ruby_promises"
+require "rosarium"
 require_relative "./promise_test_helper"
 
 describe "deferred promises" do
@@ -6,12 +6,12 @@ describe "deferred promises" do
   include PromiseTestHelper
 
   it "creates a pending promise" do
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     check_pending deferred.promise
   end
 
   it "deferred can be fulfilled only once" do
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     check_pending deferred.promise
     deferred.resolve 7
     check_fulfilled deferred.promise, 7
@@ -23,7 +23,7 @@ describe "deferred promises" do
 
   it "deferred can be rejected only once" do
     e = an_error
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     check_pending deferred.promise
     deferred.reject e
     check_rejected deferred.promise, e
@@ -34,23 +34,23 @@ describe "deferred promises" do
   end
 
   it "can only be rejected with an exception" do
-    deferred = MyConcurrent::Promise.defer
+    deferred = Rosarium::Promise.defer
     check_pending deferred.promise
     expect { deferred.reject "123" }.to raise_error /reason must be an Exception/
     check_pending deferred.promise
   end
 
   it "can be resolved with an already-fulfilled promise" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
     d2.resolve 7
     d1.resolve(d2.promise)
     check_fulfilled d1.promise, 7
   end
 
   it "can be resolved with an already-rejected promise" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
     e = an_error
     d2.reject e
     d1.resolve(d2.promise)
@@ -58,8 +58,8 @@ describe "deferred promises" do
   end
 
   it "can be resolved with a later-fulfilled promise" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
     d1.resolve(d2.promise)
     check_resolving d1.promise
     d2.resolve 7
@@ -68,8 +68,8 @@ describe "deferred promises" do
   end
 
   it "can be resolved with a later-rejected promise" do
-    d1 = MyConcurrent::Promise.defer
-    d2 = MyConcurrent::Promise.defer
+    d1 = Rosarium::Promise.defer
+    d2 = Rosarium::Promise.defer
     d1.resolve(d2.promise)
     check_resolving d1.promise
     e = an_error
@@ -79,7 +79,7 @@ describe "deferred promises" do
   end
 
   it "waits for a value (fulfilled)" do
-    d = MyConcurrent::Promise.defer
+    d = Rosarium::Promise.defer
     check_pending d.promise
     Thread.new { sleep 0.1; d.resolve 7 }
     v = d.promise.value
@@ -87,7 +87,7 @@ describe "deferred promises" do
   end
 
   it "waits for a value (rejected)" do
-    d = MyConcurrent::Promise.defer
+    d = Rosarium::Promise.defer
     check_pending d.promise
     Thread.new { sleep 0.1; d.reject an_error }
     v = d.promise.value
@@ -96,7 +96,7 @@ describe "deferred promises" do
   end
 
   it "waits for a reason (fulfilled)" do
-    d = MyConcurrent::Promise.defer
+    d = Rosarium::Promise.defer
     check_pending d.promise
     Thread.new { sleep 0.1; d.resolve 7 }
     r = d.promise.reason
@@ -105,7 +105,7 @@ describe "deferred promises" do
   end
 
   it "waits for a reason (rejected)" do
-    d = MyConcurrent::Promise.defer
+    d = Rosarium::Promise.defer
     check_pending d.promise
     e = an_error
     Thread.new { sleep 0.1; d.reject e }
@@ -114,7 +114,7 @@ describe "deferred promises" do
   end
 
   it "waits for a value! (fulfilled)" do
-    d = MyConcurrent::Promise.defer
+    d = Rosarium::Promise.defer
     check_pending d.promise
     Thread.new { sleep 0.1; d.resolve 7 }
     v = d.promise.value!
@@ -122,7 +122,7 @@ describe "deferred promises" do
   end
 
   it "waits for a value! (rejected)" do
-    d = MyConcurrent::Promise.defer
+    d = Rosarium::Promise.defer
     check_pending d.promise
     e = an_error
     Thread.new { sleep 0.1; d.reject e }

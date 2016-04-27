@@ -1,4 +1,4 @@
-# ruby-promises
+# Rosarium
 
 A library for implementing Promises - or something like them - in ruby.
 
@@ -8,46 +8,45 @@ Because I keep hitting bugs and annoying inflexibilities in `concurrent-ruby`,
 whereas I really enjoy the stability and flexibility of JavaScript's "Q"
 library (<https://github.com/kriskowal/q/wiki/API-Reference>).
 
-As you can tell by the fact that the module is called `MyConcurrent`, I'm not
-expecting anyone but me to use this code at this time.  But you're welcome to
-do so, if you like.
+I'm not expecting anyone but me to use this code at this time.  But you're
+welcome to do so, if you like.
 
 # Example
 
 ```
-  require 'ruby-promises'
+  require 'rosarium'
 ```
 
 ## Static methods for creating promises:
 
 ```
   # Immediately ready for async execution:
-  promise = MyConcurrent::Promise.execute { ... }
+  promise = Rosarium::Promise.execute { ... }
 
   # Immediately fulfilled:
-  promise = MyConcurrent::Promise.resolve(anything_except_a_promise)
+  promise = Rosarium::Promise.resolve(anything_except_a_promise)
 
   # Immediately rejected:
-  promise = MyConcurrent::Promise.reject(an_exception)
+  promise = Rosarium::Promise.reject(an_exception)
 
   # The same promise (returns its argument)
-  a_promise = MyConcurrent::Promise.resolve(a_promise)
+  a_promise = Rosarium::Promise.resolve(a_promise)
 
   # Once all promises in the list are fulfilled, then fulfill with a list of
   # their values.  If any promise in the list is rejected, then reject with
   # the same reason:
-  promise = MyConcurrent::Promise.all([ promise1, promise2, ... ])
+  promise = Rosarium::Promise.all([ promise1, promise2, ... ])
 
   # Wait for all the promises in the list to become settled (fulfilled or
   # rejected); then fulfill with the list of promises.
-  promise = MyConcurrent::Promise.all_settled([ promise1, promise2, ... ])
+  promise = Rosarium::Promise.all_settled([ promise1, promise2, ... ])
 ```
 
 ## Deferreds
 
 ```
   # Create a "deferred":
-  deferred = MyConcurrent::Promise.defer
+  deferred = Rosarium::Promise.defer
   promise = deferred.promise
 ```
 

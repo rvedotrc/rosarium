@@ -1,9 +1,9 @@
-require "ruby_promises"
+require "rosarium"
 
-describe MyConcurrent::FixedThreadExecutor do
+describe Rosarium::FixedThreadExecutor do
 
   it "runs a job" do
-    ex = MyConcurrent::FixedThreadExecutor.new(1)
+    ex = Rosarium::FixedThreadExecutor.new(1)
     done = false
     ex.submit { done = true }
     ex.wait_until_idle
@@ -11,7 +11,7 @@ describe MyConcurrent::FixedThreadExecutor do
   end
 
   it "discards exceptions" do
-    ex = MyConcurrent::FixedThreadExecutor.new(1)
+    ex = Rosarium::FixedThreadExecutor.new(1)
     done = false
     ex.submit { raise "bang" }
     ex.submit { done = true }
@@ -20,7 +20,7 @@ describe MyConcurrent::FixedThreadExecutor do
   end
 
   it "runs jobs concurrently" do
-    ex = MyConcurrent::FixedThreadExecutor.new(3)
+    ex = Rosarium::FixedThreadExecutor.new(3)
     m = Mutex.new
     done = []
     3.times do
