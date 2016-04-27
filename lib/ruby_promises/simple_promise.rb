@@ -43,6 +43,17 @@ module MyConcurrent
       state == :rejected
     end
 
+    def value!
+      wait
+      synchronized do
+        if @state == :rejected
+          raise @reason
+        else
+          @value
+        end
+      end
+    end
+
     def wait
       m = Mutex.new
       c = ConditionVariable.new

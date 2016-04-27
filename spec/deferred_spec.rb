@@ -111,4 +111,22 @@ describe "deferred promises" do
     expect(r).to eq(e)
   end
 
+  it "waits for a value! (fulfilled)" do
+    d = MyConcurrent::Promise.defer
+    check_pending d.promise
+    Thread.new { sleep 0.1; d.resolve 7 }
+    v = d.promise.value!
+    expect(v).to eq(7)
+  end
+
+  it "waits for a value! (rejected)" do
+    d = MyConcurrent::Promise.defer
+    check_pending d.promise
+    e = an_error
+    Thread.new { sleep 0.1; d.reject e }
+    expect {
+      d.promise.value!
+    }.to raise_error(e)
+  end
+
 end
