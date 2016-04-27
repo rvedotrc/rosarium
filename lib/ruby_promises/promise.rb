@@ -37,6 +37,25 @@ module MyConcurrent
       deferred.promise
     end
 
+    def self.all_settled(promises)
+      return resolve([]) if promises.empty?
+
+      deferred = new_deferred
+      promises = promises.dup
+
+      check = Proc.new do
+        if promises.all? {|promise| promise.fulfilled? or promise.rejected?}
+          deferred.resolve promises
+        end
+      end
+
+      promises.each do |promise|
+        promise.then(check) { check.call }
+      end
+
+      deferred.promise
+    end
+
     def then(on_rejected = nil, &on_fulfilled)
       deferred = self.class.new_deferred
 

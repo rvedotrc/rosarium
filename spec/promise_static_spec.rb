@@ -45,4 +45,23 @@ describe "instantly-resolved promises" do
     check_rejected promise, e
   end
 
+  it "supports all_settled (empty)" do
+    promise = MyConcurrent::Promise.all_settled []
+    check_fulfilled promise, []
+  end
+
+  it "supports all_settled (non-empty)" do
+    d1 = MyConcurrent::Promise.defer
+    d2 = MyConcurrent::Promise.defer
+    promise = MyConcurrent::Promise.all_settled [d1.promise, d2.promise]
+    check_pending promise
+
+    d1.resolve 7
+    check_pending promise
+
+    e = an_error
+    d2.reject e
+    check_fulfilled promise, [ d1.promise, d2.promise ]
+  end
+
 end
