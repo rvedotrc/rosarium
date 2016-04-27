@@ -76,4 +76,39 @@ describe "deferred promises" do
     check_rejected d1.promise, e
   end
 
+  it "waits for a value (fulfilled)" do
+    d = MyConcurrent::Promise.defer
+    check_pending d.promise
+    Thread.new { sleep 0.1; d.resolve 7 }
+    v = d.promise.value
+    expect(v).to eq(7)
+  end
+
+  it "waits for a value (rejected)" do
+    d = MyConcurrent::Promise.defer
+    check_pending d.promise
+    Thread.new { sleep 0.1; d.reject an_error }
+    v = d.promise.value
+    expect(v).to eq(nil)
+    expect(d.promise).to be_rejected
+  end
+
+  it "waits for a reason (fulfilled)" do
+    d = MyConcurrent::Promise.defer
+    check_pending d.promise
+    Thread.new { sleep 0.1; d.resolve 7 }
+    r = d.promise.reason
+    expect(r).to eq(nil)
+    expect(d.promise).to be_fulfilled
+  end
+
+  it "waits for a reason (rejected)" do
+    d = MyConcurrent::Promise.defer
+    check_pending d.promise
+    e = an_error
+    Thread.new { sleep 0.1; d.reject e }
+    r = d.promise.reason
+    expect(r).to eq(e)
+  end
+
 end

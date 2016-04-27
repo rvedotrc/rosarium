@@ -26,10 +26,12 @@ module MyConcurrent
     end
 
     def value
+      wait
       synchronized { @value }
     end
 
     def reason
+      wait
       synchronized { @reason }
     end
 
@@ -39,6 +41,20 @@ module MyConcurrent
 
     def rejected?
       state == :rejected
+    end
+
+    def wait
+      m = Mutex.new
+      c = ConditionVariable.new
+
+      on_resolution do
+        m.synchronize { c.broadcast }
+      end
+
+      loop do
+        break if state == :fulfilled or state == :rejected
+        m.synchronize { c.wait m }
+      end
     end
 
     private
