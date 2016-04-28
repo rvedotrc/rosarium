@@ -77,6 +77,10 @@ then later, use the "deferred" to fulfill or reject the promise:
   # or nil (if fulfilled).
   promise.reason
 
+  # A hash describing the state of the promise.  Always includes :state key;
+  # may include :value or :reason.
+  promise.inspect
+
   # true iff state == :fulfilled
   promise.fulfilled?
 

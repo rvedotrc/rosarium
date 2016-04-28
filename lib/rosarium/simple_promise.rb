@@ -36,6 +36,15 @@ module Rosarium
       synchronized { @reason }
     end
 
+    def inspect
+      synchronized do
+        r = { state: @state }
+        r[:value] = @value if @state == :fulfilled
+        r[:reason] = @reason if @state == :rejected
+        r
+      end
+    end
+
     def fulfilled?
       state == :fulfilled
     end
