@@ -23,21 +23,21 @@ module Rosarium
     end
 
     def state
-      synchronized { @state }
+      synchronize { @state }
     end
 
     def value
       wait
-      synchronized { @value }
+      synchronize { @value }
     end
 
     def reason
       wait
-      synchronized { @reason }
+      synchronize { @reason }
     end
 
     def inspect
-      synchronized do
+      synchronize do
         r = { state: @state }
         r[:value] = @value if @state == :fulfilled
         r[:reason] = @reason if @state == :rejected
@@ -55,7 +55,7 @@ module Rosarium
 
     def value!
       wait
-      synchronized do
+      synchronize do
         if @state == :rejected
           raise @reason
         else
@@ -79,7 +79,7 @@ module Rosarium
 
     private
 
-    def synchronized
+    def synchronize
       @mutex.synchronize { yield }
     end
 
@@ -100,7 +100,7 @@ module Rosarium
       callbacks = []
       add_on_resolution = false
 
-      synchronized do
+      synchronize do
         if @state == :pending
           if value.kind_of? SimplePromise
             @state = :resolving
@@ -129,7 +129,7 @@ module Rosarium
     def copy_resolution_from(other)
       callbacks = []
 
-      synchronized do
+      synchronize do
         if @state == :resolving
           @value = other.value
           @reason = other.reason
@@ -145,7 +145,7 @@ module Rosarium
     protected
 
     def on_resolution(&block)
-      immediate = synchronized do
+      immediate = synchronize do
         if @state == :fulfilled or @state == :rejected
           true
         else
