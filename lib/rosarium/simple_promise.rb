@@ -65,6 +65,8 @@ module Rosarium
       end
     end
 
+    private
+
     def wait
       on_resolution do
         @mutex.synchronize { @condition.broadcast }
@@ -77,8 +79,6 @@ module Rosarium
         end
       end
     end
-
-    private
 
     def synchronize
       @mutex.synchronize { yield }

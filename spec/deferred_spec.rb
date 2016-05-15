@@ -63,7 +63,7 @@ describe "deferred promises" do
     d1.resolve(d2.promise)
     check_pending d1.promise
     d2.resolve 7
-    d1.promise.wait
+    d1.promise.value
     check_fulfilled d1.promise, 7
   end
 
@@ -74,7 +74,7 @@ describe "deferred promises" do
     check_pending d1.promise
     e = an_error
     d2.reject e
-    d1.promise.wait
+    d1.promise.value
     check_rejected d1.promise, e
   end
 

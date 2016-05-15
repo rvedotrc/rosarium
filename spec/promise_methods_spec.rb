@@ -33,7 +33,7 @@ describe Rosarium::Promise do
     chained = deferred.promise.then { then_called = true }
     check_pending chained
     deferred.reject e
-    chained.wait
+    chained.value
     check_rejected chained, e
     expect(then_called).to be_falsy
   end
@@ -45,7 +45,7 @@ describe Rosarium::Promise do
     got_args = nil
     chained = deferred.promise.then(Proc.new {|*args| got_args = args; raise e2 }) { raise "should never be called" }
     deferred.reject e
-    chained.wait
+    chained.value
     check_rejected chained, e2
     expect(got_args).to eq([e])
   end
@@ -54,7 +54,7 @@ describe Rosarium::Promise do
     deferred = Rosarium::Promise.defer
     chained = deferred.promise.then(Proc.new {7}) { raise "should never be called" }
     deferred.reject an_error
-    chained.wait
+    chained.value
     check_fulfilled chained, 7
   end
 
@@ -63,7 +63,7 @@ describe Rosarium::Promise do
       deferred = Rosarium::Promise.defer
       chained = deferred.promise.send(method) { 7 }
       deferred.reject an_error
-      chained.wait
+      chained.value
       check_fulfilled chained, 7
     end
   end

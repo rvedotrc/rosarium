@@ -90,9 +90,6 @@ then later, use the "deferred" to fulfill or reject the promise:
   # Wait for the promise to be settled, then return its value (if fulfilled),
   # or raise with the rejection reason (if rejected).
   promise.value!
-
-  # Wait for the promise to be settled
-  promise.wait
 ```
 
 Chaining promises together:
