@@ -5,28 +5,24 @@ module Rosarium
     DEFAULT_ON_FULFILL = Proc.new {|value| value}
     DEFAULT_ON_REJECT = Proc.new {|reason| raise reason}
 
-    def self.defer
-      new_deferred
-    end
-
     def self.resolve(value)
       if value.kind_of? Promise
         return value
       end
 
-      deferred = new_deferred
+      deferred = defer
       deferred.resolve(value)
       deferred.promise
     end
 
     def self.reject(reason)
-      deferred = new_deferred
+      deferred = defer
       deferred.reject(reason)
       deferred.promise
     end
 
     def self.execute(&block)
-      deferred = new_deferred
+      deferred = defer
       EXECUTOR.submit do
         begin
           deferred.resolve block.call
@@ -40,7 +36,7 @@ module Rosarium
     def self.all_settled(promises)
       return resolve([]) if promises.empty?
 
-      deferred = new_deferred
+      deferred = defer
       promises = promises.dup
 
       check = Proc.new do
@@ -59,7 +55,7 @@ module Rosarium
     def self.all(promises)
       return resolve([]) if promises.empty?
 
-      deferred = new_deferred
+      deferred = defer
       promises = promises.dup
 
       do_reject = Proc.new {|reason| deferred.reject reason}
@@ -77,7 +73,7 @@ module Rosarium
     end
 
     def then(on_rejected = nil, &on_fulfilled)
-      deferred = self.class.new_deferred
+      deferred = self.class.defer
 
       on_fulfilled ||= DEFAULT_ON_FULFILL
       on_rejected ||= DEFAULT_ON_REJECT

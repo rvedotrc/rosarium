@@ -2,7 +2,7 @@ module Rosarium
 
   class SimplePromise
 
-    def self.new_deferred
+    def self.defer
       promise = new
       resolver = promise.method :resolve
       rejecter = promise.method :reject
