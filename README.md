@@ -117,7 +117,3 @@ Promise code (every time a ruby block appears in the above examples) is run
 via a fixed-size thread pool, currently set to 10 threads.  Execution order is
 not defined.
 
-In comparison to the Promises/A+ spec <https://promisesaplus.com/>, these
-promises have an extra possible state, `:resolving`.  You are encouraged to
-use `#fulfilled?` and `#rejected?` instead anyway.
-
