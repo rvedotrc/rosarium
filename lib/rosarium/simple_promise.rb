@@ -17,6 +17,7 @@ module Rosarium
 
     def initialize
       @state = :pending
+      @resolving = false
       @mutex = Mutex.new
       @condition = ConditionVariable.new
       @on_resolution = []
@@ -101,9 +102,9 @@ module Rosarium
       add_on_resolution = false
 
       synchronize do
-        if @state == :pending
+        if @state == :pending and not @resolving
           if value.kind_of? SimplePromise
-            @state = :resolving
+            @resolving = true
             add_on_resolution = true
           elsif reason.nil?
             @value = value
@@ -130,13 +131,12 @@ module Rosarium
       callbacks = []
 
       synchronize do
-        if @state == :resolving
-          @value = other.value
-          @reason = other.reason
-          @state = other.state
-          callbacks.concat @on_resolution
-          @on_resolution.clear
-        end
+        @value = other.value
+        @reason = other.reason
+        @state = other.state
+        @resolving = false
+        callbacks.concat @on_resolution
+        @on_resolution.clear
       end
 
       callbacks.each {|c| EXECUTOR.submit { c.call } }

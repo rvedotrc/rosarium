@@ -9,15 +9,6 @@ module PromiseTestHelper
     expect(promise.inspect).to eq(state: :pending)
   end
 
-  def check_resolving(promise)
-    expect(promise.state).to eq(:resolving)
-    expect(promise).not_to be_fulfilled
-    expect(promise).not_to be_rejected
-    # expect(promise.value).to be_nil # should block
-    # expect(promise.reason).to be_nil # should block
-    expect(promise.inspect).to eq(state: :resolving)
-  end
-
   def check_fulfilled(promise, value)
     expect(promise.state).to eq(:fulfilled)
     expect(promise).to be_fulfilled

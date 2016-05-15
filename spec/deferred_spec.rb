@@ -61,7 +61,7 @@ describe "deferred promises" do
     d1 = Rosarium::Promise.defer
     d2 = Rosarium::Promise.defer
     d1.resolve(d2.promise)
-    check_resolving d1.promise
+    check_pending d1.promise
     d2.resolve 7
     d1.promise.wait
     check_fulfilled d1.promise, 7
@@ -71,7 +71,7 @@ describe "deferred promises" do
     d1 = Rosarium::Promise.defer
     d2 = Rosarium::Promise.defer
     d1.resolve(d2.promise)
-    check_resolving d1.promise
+    check_pending d1.promise
     e = an_error
     d2.reject e
     d1.promise.wait
