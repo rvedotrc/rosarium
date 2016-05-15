@@ -66,7 +66,7 @@ then later, use the "deferred" to fulfill or reject the promise:
 ## Methods of promises:
 
 ```
-  # One of: :pending, :resolving, :fulfilled, :rejected.
+  # One of: :pending, :fulfilled, :rejected.
   promise.state
 
   # Wait for the promise to be settled, then return its value (if fulfilled -
