@@ -79,14 +79,14 @@ module Rosarium
       on_rejected ||= DEFAULT_ON_REJECT
 
       on_resolution do
-        callback, arg = if fulfilled?
-                          [ on_fulfilled, value ]
-                        else
-                          [ on_rejected, reason ]
-                        end
-
         begin
-          deferred.resolve(callback.call arg)
+          deferred.resolve(
+            if fulfilled?
+              on_fulfilled.call value
+            else
+              on_rejected.call reason
+            end
+          )
         rescue Exception => e
           deferred.reject e
         end
