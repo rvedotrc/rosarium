@@ -39,8 +39,12 @@ module Rosarium
       deferred = defer
       promises = promises.dup
 
+      waiting_for = promises.count
+      mutex = Mutex.new
+
       check = Proc.new do
-        if promises.all? {|promise| promise.fulfilled? or promise.rejected?}
+        # Includes both fulfilled and rejected, so always hits zero eventually
+        if mutex.synchronize { (waiting_for -= 1) == 0 }
           deferred.resolve promises
         end
       end
@@ -58,9 +62,13 @@ module Rosarium
       deferred = defer
       promises = promises.dup
 
+      waiting_for = promises.count
+      mutex = Mutex.new
+
       do_reject = Proc.new {|reason| deferred.reject reason}
       do_fulfill = Proc.new do
-        if promises.all?(&:fulfilled?)
+        # Only fulfilled (not rejected), so hits zero iff all promises were fulfilled
+        if mutex.synchronize { (waiting_for -= 1) == 0 }
           deferred.resolve(promises.map &:value)
         end
       end
