@@ -69,6 +69,12 @@ then later, use the "deferred" to fulfill or reject the promise:
   # One of: :pending, :fulfilled, :rejected.
   promise.state
 
+  # Equivalent to "state == :fulfilled"
+  promise.fulfilled?
+
+  # Equivalent to "state == :rejected"
+  promise.rejected?
+
   # Wait for the promise to be settled, then return its value (if fulfilled -
   # note the value may be nil), or nil (if rejected).
   promise.value
@@ -77,19 +83,13 @@ then later, use the "deferred" to fulfill or reject the promise:
   # or nil (if fulfilled).
   promise.reason
 
-  # A hash describing the state of the promise.  Always includes :state key;
-  # may include :value or :reason.
-  promise.inspect
-
-  # true iff state == :fulfilled
-  promise.fulfilled?
-
-  # true iff state == :rejected
-  promise.rejected?
-
   # Wait for the promise to be settled, then return its value (if fulfilled),
   # or raise with the rejection reason (if rejected).
   promise.value!
+
+  # A hash describing the state of the promise.  Always includes :state key;
+  # may include :value or :reason.
+  promise.inspect
 ```
 
 Chaining promises together:
