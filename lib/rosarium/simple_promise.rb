@@ -69,10 +69,10 @@ module Rosarium
 
     def wait
       on_resolution do
-        @mutex.synchronize { @condition.broadcast }
+        synchronize { @condition.broadcast }
       end
 
-      @mutex.synchronize do
+      synchronize do
         loop do
           return if @state == :fulfilled or @state == :rejected
           @condition.wait @mutex
