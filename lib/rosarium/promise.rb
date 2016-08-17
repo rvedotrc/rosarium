@@ -25,6 +25,7 @@ module Rosarium
       deferred = defer
       EXECUTOR.submit do
         begin
+          # User-supplied code
           deferred.resolve block.call
         rescue Exception => e
           deferred.reject e
@@ -90,8 +91,10 @@ module Rosarium
         begin
           deferred.resolve(
             if fulfilled?
+              # User-supplied code
               on_fulfilled.call value
             else
+              # User-supplied code
               on_rejected.call reason
             end
           )
