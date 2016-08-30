@@ -68,4 +68,11 @@ describe Rosarium::Promise do
     end
   end
 
+  it "uses the executor even if immediately callable" do
+    deferred = Rosarium::Promise.resolve(nil).then { sleep 0.1; 7 }
+    check_pending deferred
+    sleep 0.2
+    check_fulfilled deferred, 7
+  end
+
 end
