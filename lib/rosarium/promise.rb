@@ -21,17 +21,9 @@ module Rosarium
       deferred.promise
     end
 
+    @@resolved = resolve(nil)
     def self.execute(&block)
-      deferred = defer
-      EXECUTOR.submit do
-        begin
-          # User-supplied code
-          deferred.resolve block.call
-        rescue Exception => e
-          deferred.reject e
-        end
-      end
-      deferred.promise
+      @@resolved.then { block.call }
     end
 
     def self.all_settled(promises)
