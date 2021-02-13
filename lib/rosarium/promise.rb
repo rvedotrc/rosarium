@@ -174,7 +174,7 @@ module Rosarium
 
       synchronize do
         loop do
-          return if @state == :fulfilled || @state == :rejected
+          return if @state != :pending
           @condition.wait @mutex
         end
       end
