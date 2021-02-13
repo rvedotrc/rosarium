@@ -38,7 +38,7 @@ module Rosarium
     end
 
     def self.execute(&block)
-      @@resolved.then { block.call }
+      @@resolved.then(&block)
     end
 
     def self.all_settled(promises)
@@ -58,7 +58,7 @@ module Rosarium
       end
 
       promises.each do |promise|
-        promise.then(check) { check.call }
+        promise.then(check, &check)
       end
 
       deferred.promise
@@ -82,7 +82,7 @@ module Rosarium
       end
 
       promises.each do |promise|
-        promise.then(do_reject) { do_fulfill.call }
+        promise.then(do_reject, &do_fulfill)
       end
 
       deferred.promise
@@ -220,7 +220,7 @@ module Rosarium
         value.when_settled { copy_settlement_from value }
       end
 
-      callbacks.each {|c| EXECUTOR.submit { c.call } }
+      callbacks.each { |c| EXECUTOR.submit(&c) }
     end
 
     def copy_settlement_from(other)
@@ -235,7 +235,7 @@ module Rosarium
         @when_settled.clear
       end
 
-      callbacks.each {|c| EXECUTOR.submit { c.call } }
+      callbacks.each { |c| EXECUTOR.submit(&c) }
     end
 
     protected
