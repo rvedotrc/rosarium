@@ -3,9 +3,6 @@
 module Rosarium
   class Promise
 
-    DEFAULT_ON_FULFILL = proc { |value| value }
-    DEFAULT_ON_REJECT = proc { |reason| raise reason }
-
     private_class_method :new
 
     def self.defer
@@ -136,6 +133,9 @@ module Rosarium
         @value
       end
     end
+
+    DEFAULT_ON_FULFILL = proc { |value| value }
+    DEFAULT_ON_REJECT = proc { |reason| raise reason }
 
     def then(on_rejected = nil, &on_fulfilled)
       deferred = self.class.defer
