@@ -79,7 +79,7 @@ module Rosarium
       on_fulfilled ||= DEFAULT_ON_FULFILL
       on_rejected ||= DEFAULT_ON_REJECT
 
-      on_resolution do
+      when_settled do
         EXECUTOR.submit do
           begin
             deferred.resolve(

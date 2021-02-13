@@ -20,7 +20,7 @@ module Rosarium
       @resolving = false
       @mutex = Mutex.new
       @condition = ConditionVariable.new
-      @on_resolution = []
+      @when_settled = []
     end
 
     def state
@@ -68,7 +68,7 @@ module Rosarium
     private
 
     def wait
-      on_resolution do
+      when_settled do
         synchronize { @condition.broadcast }
       end
 
@@ -87,47 +87,47 @@ module Rosarium
     public
 
     def resolve(value)
-      _resolve(value, nil)
+      try_settle(value, nil)
     end
 
     def reject(reason)
       raise "reason must be an Exception" unless reason.kind_of? Exception
-      _resolve(nil, reason)
+      try_settle(nil, reason)
     end
 
     private
 
-    def _resolve(value, reason)
+    def try_settle(value, reason)
       callbacks = []
-      add_on_resolution = false
+      add_when_settled = false
 
       synchronize do
         if @state == :pending and not @resolving
           if value.kind_of? SimplePromise
             @resolving = true
-            add_on_resolution = true
+            add_when_settled = true
           elsif reason.nil?
             @value = value
             @state = :fulfilled
-            callbacks.concat @on_resolution
-            @on_resolution.clear
+            callbacks.concat @when_settled
+            @when_settled.clear
           else
             @reason = reason
             @state = :rejected
-            callbacks.concat @on_resolution
-            @on_resolution.clear
+            callbacks.concat @when_settled
+            @when_settled.clear
           end
         end
       end
 
-      if add_on_resolution
-        value.on_resolution { copy_resolution_from value }
+      if add_when_settled
+        value.when_settled { copy_settlement_from value }
       end
 
       callbacks.each {|c| EXECUTOR.submit { c.call } }
     end
 
-    def copy_resolution_from(other)
+    def copy_settlement_from(other)
       callbacks = []
 
       synchronize do
@@ -135,8 +135,8 @@ module Rosarium
         @reason = other.reason
         @state = other.state
         @resolving = false
-        callbacks.concat @on_resolution
-        @on_resolution.clear
+        callbacks.concat @when_settled
+        @when_settled.clear
       end
 
       callbacks.each {|c| EXECUTOR.submit { c.call } }
@@ -144,12 +144,12 @@ module Rosarium
 
     protected
 
-    def on_resolution(&block)
+    def when_settled(&block)
       immediate = synchronize do
         if @state == :fulfilled or @state == :rejected
           true
         else
-          @on_resolution << block
+          @when_settled << block
           false
         end
       end
