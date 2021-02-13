@@ -191,7 +191,6 @@ module Rosarium
     end
 
     def try_settle(value, reason)
-      callbacks = []
       add_when_settled = false
 
       synchronize do
@@ -202,13 +201,9 @@ module Rosarium
           elsif reason.nil?
             @value = value
             @state = :fulfilled
-            callbacks.concat @when_settled
-            @when_settled.clear
           else
             @reason = reason
             @state = :rejected
-            callbacks.concat @when_settled
-            @when_settled.clear
           end
         end
       end
@@ -219,22 +214,25 @@ module Rosarium
       end
       # rubocop:enable Style/IfUnlessModifier
 
-      callbacks.each { |c| EXECUTOR.submit(&c) }
+      check_settled
     end
 
     def copy_settlement_from(other)
-      callbacks = []
-
       synchronize do
         @value = other.value
         @reason = other.reason
         @state = other.state
         @resolving = false
-        callbacks.concat @when_settled
-        @when_settled.clear
       end
 
-      callbacks.each { |c| EXECUTOR.submit(&c) }
+      check_settled
+    end
+
+    def check_settled
+      synchronize do
+        return if @state == :pending
+        @when_settled.slice!(0, @when_settled.length)
+      end.each(&:call)
     end
 
     protected
