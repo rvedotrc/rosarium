@@ -87,42 +87,6 @@ module Rosarium
       deferred.promise
     end
 
-    def then(on_rejected = nil, &on_fulfilled)
-      deferred = self.class.defer
-
-      on_fulfilled ||= DEFAULT_ON_FULFILL
-      on_rejected ||= DEFAULT_ON_REJECT
-
-      when_settled do
-        EXECUTOR.submit do
-          begin
-            deferred.resolve(
-              if fulfilled?
-                # User-supplied code
-                on_fulfilled.call value
-              else
-                # User-supplied code
-                on_rejected.call reason
-              end
-            )
-          rescue Exception => e
-            deferred.reject e
-          end
-        end
-      end
-
-      deferred.promise
-    end
-
-    def rescue(&block)
-      self.then(block)
-    end
-
-    alias catch rescue
-    alias on_error rescue
-
-    public
-
     def initialize
       @state = :pending
       @resolving = false
@@ -169,6 +133,40 @@ module Rosarium
         @value
       end
     end
+
+    def then(on_rejected = nil, &on_fulfilled)
+      deferred = self.class.defer
+
+      on_fulfilled ||= DEFAULT_ON_FULFILL
+      on_rejected ||= DEFAULT_ON_REJECT
+
+      when_settled do
+        EXECUTOR.submit do
+          begin
+            deferred.resolve(
+              if fulfilled?
+                # User-supplied code
+                on_fulfilled.call value
+              else
+                # User-supplied code
+                on_rejected.call reason
+              end
+            )
+          rescue Exception => e
+            deferred.reject e
+          end
+        end
+      end
+
+      deferred.promise
+    end
+
+    def rescue(&block)
+      self.then(block)
+    end
+
+    alias catch rescue
+    alias on_error rescue
 
     private
 
