@@ -1,9 +1,10 @@
-module Rosarium
+# frozen_string_literal: true
 
+module Rosarium
   class Promise
 
-    DEFAULT_ON_FULFILL = Proc.new {|value| value}
-    DEFAULT_ON_REJECT = Proc.new {|reason| raise reason}
+    DEFAULT_ON_FULFILL = proc { |value| value }
+    DEFAULT_ON_REJECT = proc { |reason| raise reason }
 
     private_class_method :new
 
@@ -22,9 +23,7 @@ module Rosarium
     end
 
     def self.resolve(value)
-      if value.kind_of? Promise
-        return value
-      end
+      return value if value.is_a? Promise
 
       deferred = defer
       deferred.resolve(value)
@@ -38,7 +37,7 @@ module Rosarium
     end
 
     def self.execute(&block)
-      @@resolved.then(&block)
+      @resolved.then(&block)
     end
 
     def self.all_settled(promises)
@@ -50,7 +49,7 @@ module Rosarium
       waiting_for = promises.count
       mutex = Mutex.new
 
-      check = Proc.new do
+      check = proc do
         # Includes both fulfilled and rejected, so always hits zero eventually
         if mutex.synchronize { (waiting_for -= 1) == 0 }
           deferred.resolve promises
@@ -73,11 +72,11 @@ module Rosarium
       waiting_for = promises.count
       mutex = Mutex.new
 
-      do_reject = Proc.new {|reason| deferred.reject reason}
-      do_fulfill = Proc.new do
+      do_reject = ->(reason) { deferred.reject(reason) }
+      do_fulfill = proc do
         # Only fulfilled (not rejected), so hits zero iff all promises were fulfilled
         if mutex.synchronize { (waiting_for -= 1) == 0 }
-          deferred.resolve(promises.map &:value)
+          deferred.resolve(promises.map(&:value))
         end
       end
 
@@ -119,8 +118,8 @@ module Rosarium
       self.then(block)
     end
 
-    alias_method :catch, :rescue
-    alias_method :on_error, :rescue
+    alias catch rescue
+    alias on_error rescue
 
     public
 
@@ -166,11 +165,8 @@ module Rosarium
     def value!
       wait
       synchronize do
-        if @state == :rejected
-          raise @reason
-        else
-          @value
-        end
+        raise @reason if @state == :rejected
+        @value
       end
     end
 
@@ -183,14 +179,14 @@ module Rosarium
 
       synchronize do
         loop do
-          return if @state == :fulfilled or @state == :rejected
+          return if @state == :fulfilled || @state == :rejected
           @condition.wait @mutex
         end
       end
     end
 
-    def synchronize
-      @mutex.synchronize { yield }
+    def synchronize(&block)
+      @mutex.synchronize(&block)
     end
 
     def try_settle(value, reason)
@@ -198,8 +194,8 @@ module Rosarium
       add_when_settled = false
 
       synchronize do
-        if @state == :pending and not @resolving
-          if value.kind_of? Promise
+        if @state == :pending && !@resolving
+          if value.is_a? Promise
             @resolving = true
             add_when_settled = true
           elsif reason.nil?
@@ -216,9 +212,11 @@ module Rosarium
         end
       end
 
+      # rubocop:disable Style/IfUnlessModifier
       if add_when_settled
         value.when_settled { copy_settlement_from value }
       end
+      # rubocop:enable Style/IfUnlessModifier
 
       callbacks.each { |c| EXECUTOR.submit(&c) }
     end
@@ -242,7 +240,7 @@ module Rosarium
 
     def when_settled(&block)
       immediate = synchronize do
-        if @state == :fulfilled or @state == :rejected
+        if @state == :fulfilled || @state == :rejected
           true
         else
           @when_settled << block
@@ -255,8 +253,7 @@ module Rosarium
       nil
     end
 
-    @@resolved = resolve(nil)
+    @resolved = resolve(nil)
 
   end
-
 end

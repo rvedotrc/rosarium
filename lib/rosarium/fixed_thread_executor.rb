@@ -1,5 +1,6 @@
-module Rosarium
+# frozen_string_literal: true
 
+module Rosarium
   class FixedThreadExecutor
 
     def initialize(max = 1)
@@ -14,7 +15,7 @@ module Rosarium
       @mutex.synchronize do
         @waiting << block
         if @executing < @max
-          @executing = @executing + 1
+          @executing += 1
           t = Thread.new { execute_and_count_down }
           @threads.push t
         end
@@ -36,26 +37,23 @@ module Rosarium
     private
 
     def execute_and_count_down
-      begin
-        execute
-      ensure
-        @mutex.synchronize do
-          @executing = @executing - 1
-        end
+      execute
+    ensure
+      @mutex.synchronize do
+        @executing -= 1
       end
     end
 
     def execute
-      while true
+      loop do
         block = @mutex.synchronize { @waiting.shift }
         block or break
         begin
           block.call
-        rescue Exception => e
+        rescue Exception
         end
       end
     end
 
   end
-
 end

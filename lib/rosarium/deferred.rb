@@ -1,5 +1,6 @@
-module Rosarium
+# frozen_string_literal: true
 
+module Rosarium
   class Deferred
 
     def initialize(promise, resolver, rejecter)
@@ -8,9 +9,7 @@ module Rosarium
       @rejecter = rejecter
     end
 
-    def promise
-      @promise
-    end
+    attr_reader :promise
 
     def resolve(value)
       @resolver.call(value)
@@ -21,5 +20,4 @@ module Rosarium
     end
 
   end
-
 end
