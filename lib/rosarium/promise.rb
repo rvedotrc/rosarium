@@ -57,7 +57,7 @@ module Rosarium
       end
 
       promises.each do |promise|
-        promise.then(check, &check)
+        promise.send(:when_settled, &check)
       end
 
       deferred.promise
@@ -72,16 +72,19 @@ module Rosarium
       waiting_for = promises.count
       mutex = Mutex.new
 
-      do_reject = ->(reason) { deferred.reject(reason) }
-      do_fulfill = proc do
-        # Only fulfilled (not rejected), so hits zero iff all promises were fulfilled
-        if mutex.synchronize { (waiting_for -= 1) == 0 }
-          deferred.resolve(promises.map(&:value))
+      check = lambda do |promise|
+        if promise.fulfilled?
+          # Hits zero iff all promises were fulfilled
+          if mutex.synchronize { (waiting_for -= 1) == 0 }
+            deferred.resolve(promises.map(&:value))
+          end
+        else
+          deferred.reject(promise.reason)
         end
       end
 
       promises.each do |promise|
-        promise.then(do_reject, &do_fulfill)
+        promise.send(:when_settled) { check.call(promise) }
       end
 
       deferred.promise
