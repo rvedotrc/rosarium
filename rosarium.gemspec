@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = 'rosarium'
-  s.version     = '0.1.5'
+  s.version     = '0.1.6'
   s.summary     = 'Promises, or something like them'
   s.description = <<-TEXT
     Rosarium implements something that's a bit like Promises,
