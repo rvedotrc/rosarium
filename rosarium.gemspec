@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# frozen_string_literal: true
 
 Gem::Specification.new do |s|
   s.name        = 'rosarium'
@@ -13,18 +13,19 @@ Gem::Specification.new do |s|
   s.authors     = ['Rachel Evans']
   s.email       = 'git@rve.org.uk'
   s.license     = 'Apache-2.0'
-  s.require_paths = ["lib"]
+  s.require_paths = ['lib']
 
-  s.files       = Dir.glob(%w[
-LICENSE
-README.md
-Gemfile
-Gemfile.lock
-bin/*
-lib/**/*.rb
-spec/*.rb
-  ])
+  s.files = Dir.glob(%w[
+                       LICENSE
+                       README.md
+                       Gemfile
+                       Gemfile.lock
+                       bin/*
+                       lib/**/*.rb
+                       spec/*.rb
+                     ])
 
-  # NOTE: if you change these dependencies, also change the Gemfile
-  s.add_development_dependency 'rspec', "~> 3.4"
+  # NOTE: if you change these dependencies, also change the Gemfile
+  s.add_development_dependency 'rspec', '~> 3.4'
+  s.add_development_dependency 'rubocop', '~> 1.2'
 end
