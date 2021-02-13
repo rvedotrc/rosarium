@@ -134,14 +134,8 @@ module Rosarium
       end
     end
 
-    DEFAULT_ON_FULFILL = proc { |value| value }
-    DEFAULT_ON_REJECT = proc { |reason| raise reason }
-
     def then(on_rejected = nil, &on_fulfilled)
       deferred = self.class.defer
-
-      on_fulfilled ||= DEFAULT_ON_FULFILL
-      on_rejected ||= DEFAULT_ON_REJECT
 
       when_settled do
         EXECUTOR.submit do
@@ -149,10 +143,10 @@ module Rosarium
             deferred.resolve(
               if fulfilled?
                 # User-supplied code
-                on_fulfilled.call value
+                on_fulfilled ? on_fulfilled.call(value) : value
               else
                 # User-supplied code
-                on_rejected.call reason
+                on_rejected ? on_rejected.call(reason) : raise(reason)
               end
             )
           rescue Exception => e
