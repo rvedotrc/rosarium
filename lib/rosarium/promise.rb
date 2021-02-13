@@ -5,6 +5,22 @@ module Rosarium
     DEFAULT_ON_FULFILL = Proc.new {|value| value}
     DEFAULT_ON_REJECT = Proc.new {|reason| raise reason}
 
+    private_class_method :new
+
+    def self.defer
+      promise = new
+
+      resolver = ->(value) { promise.send(:try_settle, value, nil) }
+
+      rejecter = lambda do |reason|
+        raise "reason must be an Exception" unless reason.is_a?(Exception)
+
+        promise.send(:try_settle, nil, reason)
+      end
+
+      Deferred.new(promise, resolver, rejecter)
+    end
+
     def self.resolve(value)
       if value.kind_of? Promise
         return value
@@ -108,19 +124,6 @@ module Rosarium
 
     public
 
-    def self.defer
-      promise = new
-      resolver = promise.method :resolve
-      rejecter = promise.method :reject
-
-      class <<promise
-        undef :resolve
-        undef :reject
-      end
-
-      Deferred.new(promise, resolver, rejecter)
-    end
-
     def initialize
       @state = :pending
       @resolving = false
@@ -189,19 +192,6 @@ module Rosarium
     def synchronize
       @mutex.synchronize { yield }
     end
-
-    public
-
-    def resolve(value)
-      try_settle(value, nil)
-    end
-
-    def reject(reason)
-      raise "reason must be an Exception" unless reason.kind_of? Exception
-      try_settle(nil, reason)
-    end
-
-    private
 
     def try_settle(value, reason)
       callbacks = []

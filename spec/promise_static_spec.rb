@@ -14,16 +14,11 @@ describe "instantly-resolved promises" do
   it "creates a fulfilled promise" do
     t = Rosarium::Promise.resolve 7
     check_fulfilled t, 7
-    expect(t).not_to respond_to(:fulfill)
-    expect(t).not_to respond_to(:reject)
   end
 
   it "creates a rejected promise" do
-    e = an_error
     t = Rosarium::Promise.reject an_error
     check_rejected t, an_error
-    expect(t).not_to respond_to(:fulfill)
-    expect(t).not_to respond_to(:reject)
   end
 
   it "creates an immediately-executable promise" do
