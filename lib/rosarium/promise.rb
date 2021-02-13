@@ -89,7 +89,7 @@ module Rosarium
 
     def initialize
       @state = :pending
-      @resolving = false
+      @copy_outcome_from = false
       @mutex = Mutex.new
       @condition = ConditionVariable.new
       @when_settled = []
@@ -188,9 +188,9 @@ module Rosarium
       add_when_settled = false
 
       synchronize do
-        if @state == :pending && !@resolving
+        if @state == :pending && !@copy_outcome_from
           if value.is_a? Promise
-            @resolving = true
+            @copy_outcome_from = true
             add_when_settled = true
           elsif reason.nil?
             @value = value
@@ -204,19 +204,19 @@ module Rosarium
 
       # rubocop:disable Style/IfUnlessModifier
       if add_when_settled
-        value.when_settled { copy_settlement_from value }
+        value.when_settled { copy_outcome_from value }
       end
       # rubocop:enable Style/IfUnlessModifier
 
       check_settled
     end
 
-    def copy_settlement_from(other)
+    def copy_outcome_from(other)
       synchronize do
         @value = other.value
         @reason = other.reason
         @state = other.state
-        @resolving = false
+        @copy_outcome_from = false
       end
 
       check_settled
