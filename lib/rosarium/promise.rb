@@ -8,12 +8,15 @@ module Rosarium
     def self.defer
       promise = new
 
-      resolver = ->(value) { promise.send(:try_settle, value, nil) }
+      resolver = lambda do |value|
+        promise.send(:try_settle, value, nil)
+        nil # do not leak
+      end
 
       rejecter = lambda do |reason|
         raise "reason must be an Exception" unless reason.is_a?(Exception)
-
         promise.send(:try_settle, nil, reason)
+        nil # do not leak
       end
 
       Deferred.new(promise, resolver, rejecter)
@@ -225,17 +228,11 @@ module Rosarium
 
     def when_settled(&block)
       immediate = synchronize do
-        if @state == :fulfilled || @state == :rejected
-          true
-        else
-          @when_settled << block
-          false
-        end
+        @when_settled << block if @state == :pending
+        @state != :pending
       end
 
       block.call if immediate
-
-      nil
     end
 
     @resolved = resolve(nil)
