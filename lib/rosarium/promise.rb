@@ -103,13 +103,21 @@ module Rosarium
     end
 
     def value
-      wait
+      wait_until_settled
       synchronize { @value }
     end
 
     def reason
-      wait
+      wait_until_settled
       synchronize { @reason }
+    end
+
+    def value!
+      wait_until_settled
+      synchronize do
+        raise @reason if @state == :rejected
+        @value
+      end
     end
 
     def inspect
@@ -127,14 +135,6 @@ module Rosarium
 
     def rejected?
       state == :rejected
-    end
-
-    def value!
-      wait
-      synchronize do
-        raise @reason if @state == :rejected
-        @value
-      end
     end
 
     def then(on_rejected = nil, &on_fulfilled)
@@ -170,7 +170,7 @@ module Rosarium
 
     private
 
-    def wait
+    def wait_until_settled
       synchronize do
         loop do
           return if @state != :pending
