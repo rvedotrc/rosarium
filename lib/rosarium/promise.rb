@@ -92,7 +92,7 @@ module Rosarium
 
     def initialize
       @state = :pending
-      @copy_outcome_from = false
+      @settling = false
       @mutex = Mutex.new
       @condition = ConditionVariable.new
       @when_settled = []
@@ -188,10 +188,10 @@ module Rosarium
       settle_with = nil
 
       synchronize do
-        return if @state != :pending || @copy_outcome_from
+        return if @state != :pending || @settling
 
         if value.is_a? Promise
-          @copy_outcome_from = true
+          @settling = true
         elsif reason.nil?
           settle_with = [value, nil]
         else
@@ -218,7 +218,6 @@ module Rosarium
         @state = (reason ? :rejected : :fulfilled)
         @value = value
         @reason = reason
-        @copy_outcome_from = false
         @condition.broadcast
         @when_settled.slice!(0, @when_settled.length)
       end.each(&:call)
