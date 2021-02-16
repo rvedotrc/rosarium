@@ -168,10 +168,6 @@ module Rosarium
     private
 
     def wait
-      when_settled do
-        synchronize { @condition.broadcast }
-      end
-
       synchronize do
         loop do
           return if @state != :pending
@@ -184,47 +180,43 @@ module Rosarium
       @mutex.synchronize(&block)
     end
 
+    # Can be called more than once
     def try_settle(value, reason)
-      add_when_settled = false
+      settle_with = nil
 
       synchronize do
-        if @state == :pending && !@copy_outcome_from
-          if value.is_a? Promise
-            @copy_outcome_from = true
-            add_when_settled = true
-          elsif reason.nil?
-            @value = value
-            @state = :fulfilled
-          else
-            @reason = reason
-            @state = :rejected
-          end
+        return if @state != :pending || @copy_outcome_from
+
+        if value.is_a? Promise
+          @copy_outcome_from = true
+        elsif reason.nil?
+          settle_with = [value, nil]
+        else
+          settle_with = [nil, reason]
         end
       end
 
-      # rubocop:disable Style/IfUnlessModifier
-      if add_when_settled
-        value.when_settled { copy_outcome_from value }
+      if settle_with
+        settle(*settle_with)
+      else
+        value.when_settled do
+          if value.fulfilled?
+            settle(value.value, nil)
+          else
+            settle(nil, value.reason)
+          end
+        end
       end
-      # rubocop:enable Style/IfUnlessModifier
-
-      check_settled
     end
 
-    def copy_outcome_from(other)
+    # Only called once
+    def settle(value, reason)
       synchronize do
-        @value = other.value
-        @reason = other.reason
-        @state = other.state
+        @state = (reason ? :rejected : :fulfilled)
+        @value = value
+        @reason = reason
         @copy_outcome_from = false
-      end
-
-      check_settled
-    end
-
-    def check_settled
-      synchronize do
-        return if @state == :pending
+        @condition.broadcast
         @when_settled.slice!(0, @when_settled.length)
       end.each(&:call)
     end
