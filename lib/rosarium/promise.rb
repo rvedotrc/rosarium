@@ -3,20 +3,20 @@
 module Rosarium
   class Promise
 
-    DEFAULT_ON_FULFILL = proc { |value| value }
-    DEFAULT_ON_REJECT = proc { |reason| raise reason }
-
     private_class_method :new
 
     def self.defer
       promise = new
 
-      resolver = ->(value) { promise.send(:try_settle, value, nil) }
+      resolver = lambda do |value|
+        promise.send(:try_settle, value, nil)
+        nil # do not leak
+      end
 
       rejecter = lambda do |reason|
         raise "reason must be an Exception" unless reason.is_a?(Exception)
-
         promise.send(:try_settle, nil, reason)
+        nil # do not leak
       end
 
       Deferred.new(promise, resolver, rejecter)
@@ -57,7 +57,7 @@ module Rosarium
       end
 
       promises.each do |promise|
-        promise.then(check, &check)
+        promise.send(:when_settled, &check)
       end
 
       deferred.promise
@@ -72,60 +72,27 @@ module Rosarium
       waiting_for = promises.count
       mutex = Mutex.new
 
-      do_reject = ->(reason) { deferred.reject(reason) }
-      do_fulfill = proc do
-        # Only fulfilled (not rejected), so hits zero iff all promises were fulfilled
-        if mutex.synchronize { (waiting_for -= 1) == 0 }
-          deferred.resolve(promises.map(&:value))
+      check = lambda do |promise|
+        if promise.fulfilled?
+          # Hits zero iff all promises were fulfilled
+          if mutex.synchronize { (waiting_for -= 1) == 0 }
+            deferred.resolve(promises.map(&:value))
+          end
+        else
+          deferred.reject(promise.reason)
         end
       end
 
       promises.each do |promise|
-        promise.then(do_reject, &do_fulfill)
+        promise.send(:when_settled) { check.call(promise) }
       end
 
       deferred.promise
     end
-
-    def then(on_rejected = nil, &on_fulfilled)
-      deferred = self.class.defer
-
-      on_fulfilled ||= DEFAULT_ON_FULFILL
-      on_rejected ||= DEFAULT_ON_REJECT
-
-      when_settled do
-        EXECUTOR.submit do
-          begin
-            deferred.resolve(
-              if fulfilled?
-                # User-supplied code
-                on_fulfilled.call value
-              else
-                # User-supplied code
-                on_rejected.call reason
-              end
-            )
-          rescue Exception => e
-            deferred.reject e
-          end
-        end
-      end
-
-      deferred.promise
-    end
-
-    def rescue(&block)
-      self.then(block)
-    end
-
-    alias catch rescue
-    alias on_error rescue
-
-    public
 
     def initialize
       @state = :pending
-      @resolving = false
+      @settling = false
       @mutex = Mutex.new
       @condition = ConditionVariable.new
       @when_settled = []
@@ -136,13 +103,21 @@ module Rosarium
     end
 
     def value
-      wait
+      wait_until_settled
       synchronize { @value }
     end
 
     def reason
-      wait
+      wait_until_settled
       synchronize { @reason }
+    end
+
+    def value!
+      wait_until_settled
+      synchronize do
+        raise @reason if @state == :rejected
+        @value
+      end
     end
 
     def inspect
@@ -162,24 +137,43 @@ module Rosarium
       state == :rejected
     end
 
-    def value!
-      wait
-      synchronize do
-        raise @reason if @state == :rejected
-        @value
+    def then(on_rejected = nil, &on_fulfilled)
+      deferred = self.class.defer
+
+      when_settled do
+        EXECUTOR.submit do
+          begin
+            deferred.resolve(
+              if fulfilled?
+                # User-supplied code
+                on_fulfilled ? on_fulfilled.call(value) : value
+              else
+                # User-supplied code
+                on_rejected ? on_rejected.call(reason) : raise(reason)
+              end
+            )
+          rescue Exception => e
+            deferred.reject e
+          end
+        end
       end
+
+      deferred.promise
     end
+
+    def rescue(&block)
+      self.then(block)
+    end
+
+    alias catch rescue
+    alias on_error rescue
 
     private
 
-    def wait
-      when_settled do
-        synchronize { @condition.broadcast }
-      end
-
+    def wait_until_settled
       synchronize do
         loop do
-          return if @state == :fulfilled || @state == :rejected
+          return if @state != :pending
           @condition.wait @mutex
         end
       end
@@ -189,68 +183,55 @@ module Rosarium
       @mutex.synchronize(&block)
     end
 
+    # Can be called more than once
     def try_settle(value, reason)
-      callbacks = []
-      add_when_settled = false
+      settle_with = nil
 
       synchronize do
-        if @state == :pending && !@resolving
-          if value.is_a? Promise
-            @resolving = true
-            add_when_settled = true
-          elsif reason.nil?
-            @value = value
-            @state = :fulfilled
-            callbacks.concat @when_settled
-            @when_settled.clear
-          else
-            @reason = reason
-            @state = :rejected
-            callbacks.concat @when_settled
-            @when_settled.clear
-          end
+        return if @state != :pending || @settling
+
+        if value.is_a? Promise
+          @settling = true
+        elsif reason.nil?
+          settle_with = [value, nil]
+        else
+          settle_with = [nil, reason]
         end
       end
 
-      # rubocop:disable Style/IfUnlessModifier
-      if add_when_settled
-        value.when_settled { copy_settlement_from value }
+      if settle_with
+        settle(*settle_with)
+      else
+        value.when_settled do
+          if value.fulfilled?
+            settle(value.value, nil)
+          else
+            settle(nil, value.reason)
+          end
+        end
       end
-      # rubocop:enable Style/IfUnlessModifier
-
-      callbacks.each { |c| EXECUTOR.submit(&c) }
     end
 
-    def copy_settlement_from(other)
-      callbacks = []
-
+    # Only called once
+    def settle(value, reason)
       synchronize do
-        @value = other.value
-        @reason = other.reason
-        @state = other.state
-        @resolving = false
-        callbacks.concat @when_settled
-        @when_settled.clear
-      end
-
-      callbacks.each { |c| EXECUTOR.submit(&c) }
+        @state = (reason ? :rejected : :fulfilled)
+        @value = value
+        @reason = reason
+        @condition.broadcast
+        @when_settled.slice!(0, @when_settled.length)
+      end.each(&:call)
     end
 
     protected
 
     def when_settled(&block)
       immediate = synchronize do
-        if @state == :fulfilled || @state == :rejected
-          true
-        else
-          @when_settled << block
-          false
-        end
+        @when_settled << block if @state == :pending
+        @state != :pending
       end
 
       block.call if immediate
-
-      nil
     end
 
     @resolved = resolve(nil)
